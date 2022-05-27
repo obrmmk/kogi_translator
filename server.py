@@ -1,50 +1,56 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
-import numpy as np
-import cv2
-from image_process import canny
-from datetime import datetime
+from doctest import OutputChecker
+import gdown
 import os
-import string
-import random
+import subprocess
+from flask import Flask, render_template, request
+import models
 
-SAVE_DIR = "./sentences"
-if not os.path.isdir(SAVE_DIR):
-    os.mkdir(SAVE_DIR)
+try:
+    import sentencepiece
+except ModuleNotFoundError:
+    os.system('pip install sentencepiece')
 
-app = Flask(__name__, static_url_path="")
+try:
+    import transformers
+except ModuleNotFoundError:
+    os.system('pip install transformers')
 
-def random_str(n):
-    return ''.join([random.choice(string.ascii_letters + string.digits) for i in range(n)])
+import torch
+from transformers import MT5ForConditionalGeneration, MT5Tokenizer
+# from google_drive_downloader import GoogleDriveDownloader
+
+USE_GPU = torch.cuda.is_available()
+DEVICE = torch.device('cuda:0' if USE_GPU else 'cpu')
+print('DEVICE :', DEVICE)
+
+ 
+
+app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('index.html', sentences=os.listdir(SAVE_DIR)[::-1])
+    return render_template('index.html')
 
-@app.route('/sentences/<path:path>')
-def send_js(path):
-    return send_from_directory(SAVE_DIR, path)
-
-# 参考: https://qiita.com/yuuuu3/items/6e4206fdc8c83747544b
-@app.route('/upload', methods=['POST'])
-def upload():
-    if request.files['image']:
-        # 画像として読み込み
-        stream = request.files['image'].stream
-        img_array = np.asarray(bytearray(stream.read()), dtype=np.uint8)
-        img = cv2.imdecode(img_array, 1)
-
-        # 変換
-        img = canny(img)
-
-        # 保存
-        dt_now = datetime.now().strftime("%Y_%m_%d%_H_%M_%S_") + random_str(5)
-        save_path = os.path.join(SAVE_DIR, dt_now + ".png")
-        cv2.imwrite(save_path, img)
-
-        print("save", save_path)
-
-        return redirect('/')
+@app.route('/', methods=['POST'])
+def post():
+    input = request.form['text']
+    model_id = '1ejyg2VzwA-MbaXANmLALYBUfV4iD3_W1'
+    nmt = models.nlpcode.compose_nmt(models.t5.generate_nmt(model_id=model_id))
+    cached = {'':''}
+    ss=[]
+    for line in input.split('\n'):
+        if line not in cached:
+            translated = nmt(line, beams=1)
+            print(line, '=>', translated)
+            cached[line] = translated
+        else:
+            translated = cached[line]
+        ss.append(translated)
+    output = '\n'.join(ss)
+    return render_template('index.html', output=format(output))
+    # return render_template('index.html', output=format(output))
 
 if __name__ == '__main__':
+
     app.debug = True
-    app.run(host='0.0.0.0', port=8888)
+    app.run(host='localhost', port=8885)

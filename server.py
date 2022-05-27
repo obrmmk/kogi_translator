@@ -47,8 +47,8 @@ def post():
             translated = cached[line]
         ss.append(translated)
     output = '\n'.join(ss)
+    # return render_template('index.html', input=format(input))
     return render_template('index.html', output=format(output))
-    # return render_template('index.html', output=format(output))
 
 if __name__ == '__main__':
 

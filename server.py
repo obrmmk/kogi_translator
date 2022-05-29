@@ -33,24 +33,28 @@ def index():
 
 @app.route('/', methods=['POST'])
 def post():
-    input = request.form['text']
-    model_id = '1ejyg2VzwA-MbaXANmLALYBUfV4iD3_W1'
-    nmt = models.nlpcode.compose_nmt(models.t5.generate_nmt(model_id=model_id))
-    cached = {'':''}
-    ss=[]
-    for line in input.split('\n'):
-        if line not in cached:
-            translated = nmt(line, beams=1)
-            print(line, '=>', translated)
-            cached[line] = translated
-        else:
-            translated = cached[line]
-        ss.append(translated)
-    output = '\n'.join(ss)
-    # return render_template('index.html', input=format(input))
-    return render_template('index.html', output=format(output))
+    try:
+        if request.form['text']:
+            input = request.form['text']
+            model_id = '1ejyg2VzwA-MbaXANmLALYBUfV4iD3_W1'
+            nmt = models.nlpcode.compose_nmt(models.t5.generate_nmt(model_id=model_id))
+            cached = {'':''}
+            ss=[]
+            for line in input.split('\n'):
+                if line not in cached:
+                    translated = nmt(line, beams=1)
+                    print(line, '=>', translated)
+                    cached[line] = translated
+                else:
+                    translated = cached[line]
+                ss.append(translated)
+            output = '\n'.join(ss)
+            # return render_template('index.html', input=format(input))
+            return render_template('index.html', output=format(output))
+    except:
+        return render_template('index.html')
 
 if __name__ == '__main__':
 
     app.debug = True
-    app.run(host='localhost', port=8885)
+    app.run(host='localhost', port=8888)

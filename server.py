@@ -3,7 +3,7 @@ import gdown
 import os
 import subprocess
 from flask import Flask, render_template, request
-import moduls
+import modules
 
 try:
     import sentencepiece

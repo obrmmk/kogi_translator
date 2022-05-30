@@ -37,7 +37,7 @@ def post():
         if request.form['text']:
             input = request.form['text']
             model_id = '1ejyg2VzwA-MbaXANmLALYBUfV4iD3_W1'
-            nmt = models.nlpcode.compose_nmt(models.t5.generate_nmt(model_id=model_id))
+            nmt = modules.nlpcode.compose_nmt(modules.t5.generate_nmt(model_id=model_id))
             cached = {'':''}
             ss=[]
             for line in input.split('\n'):
